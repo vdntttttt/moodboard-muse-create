@@ -4,10 +4,6 @@ import MoodboardCanvas from '@/components/MoodBoard/MoodboardCanvas';
 import { useMoodboardStore } from '@/store/moodboardStore';
 import { toast } from 'sonner';
 
-// Create public folder for textures
-// We'll use this for additional textures in the future
-// For now we're using the uploaded corkboard image
-
 const Index = () => {
   useEffect(() => {
     // Welcome message

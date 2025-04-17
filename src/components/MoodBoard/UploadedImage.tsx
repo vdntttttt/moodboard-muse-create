@@ -1,6 +1,7 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { useMoodboardStore, MoodboardItem } from '@/store/moodboardStore';
-import { Trash, Move, ZoomIn, ZoomOut, ImageOff } from 'lucide-react';
+import { Trash, ZoomIn, ZoomOut, ImageOff } from 'lucide-react';
 import { removeBackgroundFromImage } from '@/utils/backgroundRemoval';
 import { toast } from 'sonner';
 
@@ -13,65 +14,69 @@ const UploadedImage: React.FC<UploadedImageProps> = ({ item, isActive }) => {
   const { updateItem, removeItem, setActiveItemId } = useMoodboardStore();
   const elementRef = useRef<HTMLDivElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   
-  // Handle drag start
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+  // Handle mouse down to start dragging
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
+    e.preventDefault();
+    
     if (!isActive) setActiveItemId(item.id);
     
-    // Store initial mouse position and element position
+    // Calculate offset from mouse to element top-left corner
     const rect = e.currentTarget.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
+    setDragOffset({ x: offsetX, y: offsetY });
     
-    e.dataTransfer.setDragImage(new Image(), 0, 0); // Hide default drag image
-    
-    // Store offset in data transfer
-    e.dataTransfer.setData('text/plain', JSON.stringify({ 
-      id: item.id,
-      offsetX, 
-      offsetY,
-      type: 'move-image' // Add type to identify move operation
-    }));
+    setIsDragging(true);
   };
 
-  // Handle drag over
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  // Handle drop for repositioning
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // Handle mouse move for dragging
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging || !elementRef.current) return;
     
-    try {
-      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-      const { id, offsetX, offsetY, type } = data;
+    // Get the parent canvas coordinates
+    const canvas = elementRef.current.closest('[class*="absolute inset-0"]');
+    if (canvas) {
+      const canvasRect = canvas.getBoundingClientRect();
+      const newX = e.clientX - canvasRect.left - dragOffset.x;
+      const newY = e.clientY - canvasRect.top - dragOffset.y;
       
-      if (id === item.id && type === 'move-image') {
-        // Get the parent canvas coordinates
-        const canvas = e.currentTarget.closest('[class*="absolute inset-0"]');
-        if (canvas) {
-          const canvasRect = canvas.getBoundingClientRect();
-          const newX = e.clientX - canvasRect.left - offsetX;
-          const newY = e.clientY - canvasRect.top - offsetY;
-          
-          updateItem(item.id, {
-            position: { x: newX, y: newY }
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error handling drop:', error);
+      updateItem(item.id, {
+        position: { x: newX, y: newY }
+      });
     }
   };
+
+  // Handle mouse up to stop dragging
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Set up event listeners for mouse move and mouse up
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    } else {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
 
   // Handle click to activate
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setActiveItemId(item.id);
+    if (!isDragging) {
+      setActiveItemId(item.id);
+    }
   };
 
   // Handle image background removal
@@ -136,16 +141,13 @@ const UploadedImage: React.FC<UploadedImageProps> = ({ item, isActive }) => {
   return (
     <div
       ref={elementRef}
-      className={`moodboard-item absolute left-0 top-0 transition-transform ${isActive ? 'ring-2 ring-primary z-50' : 'z-10'}`}
+      className={`moodboard-item absolute left-0 top-0 cursor-move ${isActive ? 'ring-2 ring-primary z-50' : 'z-10'} ${isDragging ? 'opacity-80' : ''}`}
       style={{ 
         transform: `translate(${item.position.x}px, ${item.position.y}px) rotate(${item.style?.rotate || 0}deg)`,
-        transition: 'transform 0.1s ease-out'
+        transition: isDragging ? 'none' : 'transform 0.1s ease-out'
       }}
       onClick={handleClick}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-      draggable={isActive && !isProcessing}
+      onMouseDown={handleMouseDown}
     >
       {/* The image display */}
       <div className="relative">
@@ -162,6 +164,7 @@ const UploadedImage: React.FC<UploadedImageProps> = ({ item, isActive }) => {
             minHeight: '100px',
             filter: isProcessing ? 'blur(3px)' : 'none'
           }}
+          draggable={false} // Prevent browser's default dragging
         />
         
         {/* Processing overlay */}

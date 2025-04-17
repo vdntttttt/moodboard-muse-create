@@ -74,7 +74,7 @@ export default {
 				}
 			},
 			backgroundImage: {
-				'corkboard': "url('/lovable-uploads/4f0658cb-9354-48ea-a59a-fd0165c66342.png')",
+				'corkboard': "url('/lovable-uploads/13e9e3d6-1ea9-48fb-82f1-54769531e99b.png')",
 				'paper': "url('/textures/paper.png')",
 			},
 			borderRadius: {
