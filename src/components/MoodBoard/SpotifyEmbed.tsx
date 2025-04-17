@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect } from 'react';
-import { useMoodboardStore } from '@/store/moodboardStore';
+import { useMoodboardStore, MoodboardItem } from '@/store/moodboardStore';
 import { Trash } from 'lucide-react';
 
 interface SpotifyEmbedProps {

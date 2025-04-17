@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect, useState } from 'react';
-import { useMoodboardStore } from '@/store/moodboardStore';
+import { useMoodboardStore, MoodboardItem } from '@/store/moodboardStore';
 import { Trash, Move, ZoomIn, ZoomOut, ImageOff } from 'lucide-react';
 import { removeBackgroundFromImage } from '@/utils/backgroundRemoval';
 import { toast } from 'sonner';

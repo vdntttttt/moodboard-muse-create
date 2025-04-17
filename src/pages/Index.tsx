@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import MoodboardCanvas from '@/components/MoodBoard/MoodboardCanvas';
 import { useMoodboardStore } from '@/store/moodboardStore';
 import { toast } from 'sonner';
-import { create } from 'zustand';
 
 // Create public folder for textures
 // We'll use this for additional textures in the future
