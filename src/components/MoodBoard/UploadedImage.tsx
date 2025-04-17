@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { useMoodboardStore, MoodboardItem } from '@/store/moodboardStore';
 import { Trash, Move, ZoomIn, ZoomOut, ImageOff } from 'lucide-react';
@@ -18,6 +17,7 @@ const UploadedImage: React.FC<UploadedImageProps> = ({ item, isActive }) => {
   
   // Handle drag start
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    e.stopPropagation();
     if (!isActive) setActiveItemId(item.id);
     
     // Store initial mouse position and element position
@@ -31,7 +31,8 @@ const UploadedImage: React.FC<UploadedImageProps> = ({ item, isActive }) => {
     e.dataTransfer.setData('text/plain', JSON.stringify({ 
       id: item.id,
       offsetX, 
-      offsetY 
+      offsetY,
+      type: 'move-image' // Add type to identify move operation
     }));
   };
 
@@ -43,12 +44,13 @@ const UploadedImage: React.FC<UploadedImageProps> = ({ item, isActive }) => {
   // Handle drop for repositioning
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     
     try {
       const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-      const { id, offsetX, offsetY } = data;
+      const { id, offsetX, offsetY, type } = data;
       
-      if (id === item.id) {
+      if (id === item.id && type === 'move-image') {
         // Get the parent canvas coordinates
         const canvas = e.currentTarget.closest('[class*="absolute inset-0"]');
         if (canvas) {
@@ -118,27 +120,26 @@ const UploadedImage: React.FC<UploadedImageProps> = ({ item, isActive }) => {
     });
   };
 
-  // Update position when dragging
+  // Update position using transform for smoother movement
   useEffect(() => {
     const el = elementRef.current;
     if (!el) return;
     
-    el.style.left = `${item.position.x}px`;
-    el.style.top = `${item.position.y}px`;
+    el.style.transform = `translate(${item.position.x}px, ${item.position.y}px) rotate(${item.style?.rotate || 0}deg)`;
     
     if (item.size) {
       el.style.width = `${item.size.width}px`;
       el.style.height = `${item.size.height}px`;
     }
-  }, [item.position, item.size]);
+  }, [item.position, item.size, item.style?.rotate]);
 
   return (
     <div
       ref={elementRef}
-      className={`moodboard-item ${isActive ? 'ring-2 ring-primary' : ''}`}
+      className={`moodboard-item absolute left-0 top-0 transition-transform ${isActive ? 'ring-2 ring-primary z-50' : 'z-10'}`}
       style={{ 
-        zIndex: isActive ? 100 : 10,
-        transform: `rotate(${item.style?.rotate || 0}deg)`
+        transform: `translate(${item.position.x}px, ${item.position.y}px) rotate(${item.style?.rotate || 0}deg)`,
+        transition: 'transform 0.1s ease-out'
       }}
       onClick={handleClick}
       onDragStart={handleDragStart}

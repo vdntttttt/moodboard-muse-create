@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { toast } from 'sonner';
 
@@ -18,68 +17,143 @@ export interface MoodboardItem {
   };
 }
 
+interface SavedMoodboard {
+  name: string;
+  items: MoodboardItem[];
+  createdAt: number;
+}
+
 interface MoodboardState {
   items: MoodboardItem[];
   activeItemId: string | null;
   filter: string;
+  currentBoardName: string;
+  savedBoards: SavedMoodboard[];
   addItem: (item: MoodboardItem) => void;
   updateItem: (id: string, updates: Partial<MoodboardItem>) => void;
   removeItem: (id: string) => void;
   setActiveItemId: (id: string | null) => void;
   setFilter: (filter: string) => void;
   clearBoard: () => void;
-  loadSavedBoard: (items: MoodboardItem[]) => void;
+  saveBoard: (name: string) => void;
+  loadBoard: (name: string) => void;
+  setCurrentBoardName: (name: string) => void;
+  deleteSavedBoard: (name: string) => void;
 }
 
-// Create the store
-export const useMoodboardStore = create<MoodboardState>((set) => ({
+export const useMoodboardStore = create<MoodboardState>((set, get) => ({
   items: [],
   activeItemId: null,
   filter: 'filter-none',
+  currentBoardName: 'Untitled Board',
+  savedBoards: [],
   
-  // Add a new item to the moodboard
   addItem: (item) => set((state) => ({
     items: [...state.items, item],
-    activeItemId: item.id // Set as active when added
+    activeItemId: item.id
   })),
   
-  // Update an existing item
   updateItem: (id, updates) => set((state) => ({
     items: state.items.map((item) => 
       item.id === id ? { ...item, ...updates } : item
     )
   })),
   
-  // Remove an item from the moodboard
   removeItem: (id) => set((state) => ({
     items: state.items.filter((item) => item.id !== id),
     activeItemId: state.activeItemId === id ? null : state.activeItemId
   })),
   
-  // Set the active item
   setActiveItemId: (id) => set({ activeItemId: id }),
   
-  // Set the filter for the entire board
   setFilter: (filter) => set({ filter }),
   
-  // Clear the entire board
-  clearBoard: () => set({ items: [], activeItemId: null }),
+  clearBoard: () => set({ 
+    items: [], 
+    activeItemId: null,
+    currentBoardName: 'Untitled Board'
+  }),
   
-  // Load a saved board from localStorage
-  loadSavedBoard: (items) => {
-    set({ items, activeItemId: null });
+  saveBoard: (name) => {
+    const state = get();
+    const board: SavedMoodboard = {
+      name,
+      items: state.items,
+      createdAt: Date.now()
+    };
+
+    let savedBoards = [];
+    try {
+      const savedData = localStorage.getItem('moodboards');
+      if (savedData) {
+        savedBoards = JSON.parse(savedData);
+      }
+
+      const existingIndex = savedBoards.findIndex((b: SavedMoodboard) => b.name === name);
+      if (existingIndex >= 0) {
+        savedBoards[existingIndex] = board;
+      } else {
+        savedBoards.push(board);
+      }
+
+      localStorage.setItem('moodboards', JSON.stringify(savedBoards));
+      set({ 
+        savedBoards,
+        currentBoardName: name
+      });
+      toast.success(`Saved board: ${name}`);
+    } catch (error) {
+      console.error('Error saving board:', error);
+      toast.error('Failed to save board');
+    }
+  },
+  
+  loadBoard: (name) => {
+    try {
+      const savedData = localStorage.getItem('moodboards');
+      if (savedData) {
+        const boards = JSON.parse(savedData);
+        const board = boards.find((b: SavedMoodboard) => b.name === name);
+        if (board) {
+          set({ 
+            items: board.items,
+            activeItemId: null,
+            currentBoardName: name
+          });
+          toast.success(`Loaded board: ${name}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading board:', error);
+      toast.error('Failed to load board');
+    }
+  },
+  
+  setCurrentBoardName: (name) => set({ currentBoardName: name }),
+  
+  deleteSavedBoard: (name) => {
+    try {
+      const savedData = localStorage.getItem('moodboards');
+      if (savedData) {
+        let boards = JSON.parse(savedData);
+        boards = boards.filter((b: SavedMoodboard) => b.name !== name);
+        localStorage.setItem('moodboards', JSON.stringify(boards));
+        set({ savedBoards: boards });
+        toast.success(`Deleted board: ${name}`);
+      }
+    } catch (error) {
+      console.error('Error deleting board:', error);
+      toast.error('Failed to delete board');
+    }
   }
 }));
 
-// Initialize with saved data if available
 try {
-  const savedData = localStorage.getItem('moodboard');
+  const savedData = localStorage.getItem('moodboards');
   if (savedData) {
-    const parsedData = JSON.parse(savedData);
-    if (Array.isArray(parsedData) && parsedData.length > 0) {
-      useMoodboardStore.setState({ items: parsedData });
-    }
+    const savedBoards = JSON.parse(savedData);
+    useMoodboardStore.setState({ savedBoards });
   }
 } catch (error) {
-  console.error('Error loading saved moodboard data:', error);
+  console.error('Error loading saved moodboards:', error);
 }

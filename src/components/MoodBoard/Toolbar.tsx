@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useMoodboardStore } from '@/store/moodboardStore';
 import { Download, Image, StickyNote, Music, Palette, Save, Trash, Upload } from 'lucide-react';
@@ -12,12 +11,15 @@ interface ToolbarProps {
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({ onExport }) => {
-  const { addItem, setFilter, clearBoard, items } = useMoodboardStore();
+  const { addItem, setFilter, clearBoard, items, saveBoard, loadBoard, currentBoardName, savedBoards, deleteSavedBoard, setCurrentBoardName } = useMoodboardStore();
   const [isAddNoteOpen, setIsAddNoteOpen] = useState(false);
   const [isAddSpotifyOpen, setIsAddSpotifyOpen] = useState(false);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
   const [spotifyUrl, setSpotifyUrl] = useState('');
   const [noteColor, setNoteColor] = useState('yellow');
-  const [notePattern, setNotePattern] = useState('plain');
+  const [notePattern, setNotePattern] = useState<'plain' | 'lined' | 'grid'>('plain');
+  const [boardName, setBoardName] = useState('');
 
   // Add a new sticky note
   const addNote = () => {
@@ -87,38 +89,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ onExport }) => {
     }
   };
 
-  // Save board to localStorage
-  const saveBoard = () => {
-    try {
-      localStorage.setItem('moodboard', JSON.stringify(items));
-      toast.success('Moodboard saved successfully!');
-    } catch (error) {
-      console.error('Error saving board:', error);
-      toast.error('Failed to save moodboard.');
+  const handleSaveBoard = () => {
+    if (!boardName.trim()) {
+      toast.error('Please enter a board name');
+      return;
     }
-  };
-
-  // Load board from localStorage
-  const loadBoard = () => {
-    try {
-      const savedBoard = localStorage.getItem('moodboard');
-      if (savedBoard) {
-        const savedItems = JSON.parse(savedBoard);
-        if (savedItems.length > 0) {
-          // Clear the board first and then load the saved items
-          // This is handled in the store directly
-          useMoodboardStore.getState().loadSavedBoard(savedItems);
-          toast.success('Moodboard loaded successfully!');
-        } else {
-          toast.info('No saved moodboard found.');
-        }
-      } else {
-        toast.info('No saved moodboard found.');
-      }
-    } catch (error) {
-      console.error('Error loading board:', error);
-      toast.error('Failed to load moodboard.');
-    }
+    saveBoard(boardName.trim());
+    setIsSaveDialogOpen(false);
+    setBoardName('');
   };
 
   // Handle file input change for direct upload
@@ -158,9 +136,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ onExport }) => {
 
   return (
     <>
-      {/* Main toolbar */}
       <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex items-center space-x-4 p-3 bg-white/90 backdrop-blur-sm rounded-full shadow-lg">
-        {/* Add image */}
         <label className="toolbar-button cursor-pointer">
           <input 
             type="file" 
@@ -172,23 +148,19 @@ const Toolbar: React.FC<ToolbarProps> = ({ onExport }) => {
           <Image size={20} className="text-gray-700" />
         </label>
         
-        {/* Add note */}
         <button className="toolbar-button" onClick={() => setIsAddNoteOpen(true)}>
           <StickyNote size={20} className="text-gray-700" />
         </button>
         
-        {/* Add Spotify */}
         <button className="toolbar-button" onClick={() => setIsAddSpotifyOpen(true)}>
           <Music size={20} className="text-gray-700" />
         </button>
         
-        {/* Filters button */}
         <div className="group relative">
           <button className="toolbar-button">
             <Palette size={20} className="text-gray-700" />
           </button>
           
-          {/* Filter dropdown */}
           <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
             <div className="flex flex-col space-y-2">
               <button 
@@ -225,22 +197,18 @@ const Toolbar: React.FC<ToolbarProps> = ({ onExport }) => {
           </div>
         </div>
         
-        {/* Save */}
-        <button className="toolbar-button" onClick={saveBoard}>
+        <button className="toolbar-button" onClick={() => setIsSaveDialogOpen(true)}>
           <Save size={20} className="text-gray-700" />
         </button>
         
-        {/* Load */}
-        <button className="toolbar-button" onClick={loadBoard}>
+        <button className="toolbar-button" onClick={() => setIsLoadDialogOpen(true)}>
           <Upload size={20} className="text-gray-700" />
         </button>
         
-        {/* Export */}
         <button className="toolbar-button" onClick={onExport}>
           <Download size={20} className="text-gray-700" />
         </button>
         
-        {/* Clear board */}
         <button className="toolbar-button" onClick={() => {
           if (confirm('Are you sure you want to clear the board? This cannot be undone.')) {
             clearBoard();
@@ -249,16 +217,75 @@ const Toolbar: React.FC<ToolbarProps> = ({ onExport }) => {
         }}>
           <Trash size={20} className="text-gray-700" />
         </button>
+
+        <div className="text-sm font-medium text-gray-600">
+          {currentBoardName}
+        </div>
       </div>
-      
-      {/* Add Note Dialog */}
+
+      <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Moodboard</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Board Name</label>
+              <Input
+                placeholder="My Awesome Moodboard"
+                value={boardName}
+                onChange={(e) => setBoardName(e.target.value)}
+              />
+            </div>
+            <Button onClick={handleSaveBoard}>Save Board</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isLoadDialogOpen} onOpenChange={setIsLoadDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Load Moodboard</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {savedBoards.length > 0 ? (
+              savedBoards.map((board: any) => (
+                <div key={board.name} className="flex items-center justify-between p-2 bg-secondary/20 rounded-lg">
+                  <span>{board.name}</span>
+                  <div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        loadBoard(board.name);
+                        setIsLoadDialogOpen(false);
+                      }}
+                    >
+                      Load
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteSavedBoard(board.name)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground">No saved boards found</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isAddNoteOpen} onOpenChange={setIsAddNoteOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Sticky Note</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {/* Note color selection */}
             <div>
               <label className="text-sm font-medium mb-2 block">Choose color</label>
               <div className="flex space-x-2">
@@ -272,7 +299,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ onExport }) => {
               </div>
             </div>
             
-            {/* Note pattern selection */}
             <div>
               <label className="text-sm font-medium mb-2 block">Choose pattern</label>
               <div className="flex space-x-2">
@@ -302,7 +328,6 @@ const Toolbar: React.FC<ToolbarProps> = ({ onExport }) => {
         </DialogContent>
       </Dialog>
       
-      {/* Add Spotify Dialog */}
       <Dialog open={isAddSpotifyOpen} onOpenChange={setIsAddSpotifyOpen}>
         <DialogContent>
           <DialogHeader>
