@@ -1,10 +1,11 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 33 43% 96%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -13,89 +14,105 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 30 70% 45%;
+    --primary-foreground: 30 10% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 30 50% 90%;
+    --secondary-foreground: 30 50% 25%;
 
-    --muted: 210 40% 96.1%;
+    --muted: 30 20% 92%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 30 50% 85%;
+    --accent-foreground: 30 50% 25%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 30 30% 82%;
+    --input: 30 30% 82%;
+    --ring: 30 70% 45%;
 
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-}
-
-@layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-hidden;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* Custom classes for the moodboard */
+@layer components {
+  .toolbar-button {
+    @apply w-10 h-10 flex items-center justify-center rounded-full bg-white 
+           shadow-md hover:bg-gray-100 transition-colors;
+  }
+  
+  .sticky-note {
+    @apply p-4 min-w-[200px] min-h-[200px] shadow-md cursor-move relative overflow-hidden;
+  }
+
+  .sticky-note::before {
+    content: '';
+    @apply absolute top-0 right-0 w-0 h-0 border-t-[20px] border-r-[20px]
+           border-t-transparent border-r-transparent opacity-20;
+  }
+
+  .moodboard-item {
+    @apply absolute cursor-move;
+  }
+  
+  .pin {
+    @apply w-6 h-6 absolute -top-3 left-1/2 -translate-x-1/2 -translate-y-1/4 z-10;
+  }
+
+  .tape {
+    @apply absolute w-20 h-7 bg-white/30 backdrop-blur-sm
+           rotate-6 rounded-sm top-0 left-1/2 -translate-x-1/2 -translate-y-1/2;
+  }
+
+  .filter-button {
+    @apply px-4 py-2 rounded-full text-sm bg-white shadow-md hover:bg-gray-100
+           transition-colors flex items-center gap-2;
+  }
+}
+
+/* Filter styles */
+.filter-vintage {
+  filter: sepia(0.3) saturate(1.3);
+}
+
+.filter-cozy {
+  filter: brightness(0.9) contrast(1.1) saturate(1.1);
+}
+
+.filter-pastel {
+  filter: brightness(1.1) contrast(0.9) saturate(0.8);
+}
+
+.filter-mono {
+  filter: grayscale(0.8);
+}
+
+/* Spotify embed custom styling */
+.spotify-embed {
+  @apply rounded-lg overflow-hidden shadow-lg;
+}
+
+/* Line and grid patterns for notes */
+.note-lined {
+  background-image: linear-gradient(0deg, transparent 24px, rgba(0,0,0,0.05) 25px, transparent 25px, transparent 49px, rgba(0,0,0,0.05) 50px, transparent 50px);
+  background-size: 50px 50px;
+}
+
+.note-grid {
+  background-image: 
+    linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
 }

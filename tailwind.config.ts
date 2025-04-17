@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,20 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Moodboard specific colors
+				note: {
+					yellow: '#FEF7CD',
+					blue: '#D3E4FD',
+					pink: '#FFDEE2',
+					green: '#F2FCE2',
+					purple: '#E5DEFF',
+					peach: '#FDE1D3',
 				}
+			},
+			backgroundImage: {
+				'corkboard': "url('/lovable-uploads/4f0658cb-9354-48ea-a59a-fd0165c66342.png')",
+				'paper': "url('/textures/paper.png')",
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -70,25 +84,28 @@ export default {
 			},
 			keyframes: {
 				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
+					from: { height: '0' },
+					to: { height: 'var(--radix-accordion-content-height)' },
 				},
 				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
+					from: { height: 'var(--radix-accordion-content-height)' },
+					to: { height: '0' },
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-5px)' },
+				},
+				'pin-wobble': {
+					'0%, 100%': { transform: 'rotate(0deg)' },
+					'25%': { transform: 'rotate(-2deg)' },
+					'75%': { transform: 'rotate(2deg)' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'float': 'float 3s ease-in-out infinite',
+				'pin-wobble': 'pin-wobble 0.3s ease-in-out',
 			}
 		}
 	},
